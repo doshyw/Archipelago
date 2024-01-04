@@ -94,9 +94,18 @@ class CelesteWorld(World):
         }
 
     def generate_basic(self) -> None:
-        self.multiworld.completion_condition[self.player] = lambda state: state.has(
-            f"Level {self.completion_level} A-Side Complete", self.player
-        )
+        if self.victory_condition == VictoryConditionEnum.CHAPTER_9_FAREWELL:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has(
+                "Completion (Chapter 9: Farewell)", self.player
+            )
+        elif self.victory_condition == VictoryConditionEnum.CHAPTER_8_CORE:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has(
+                "Completion (Chapter 8: Core A-Side)", self.player
+            )
+        elif self.victory_condition == VictoryConditionEnum.CHAPTER_7_SUMMIT:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has(
+                "Completion (Chapter 7: The Summit A-Side)", self.player
+            )
 
     def pre_fill(self):
         item_table = self.item_factory.get_table(self)
