@@ -77,8 +77,8 @@ class BaseData:
         for row in cls._item_data:
             uuid = cls._item_hash(
                 item_type=CelesteItemType[row[_COLUMN_ITEM_TYPE].upper()],
-                level=row[_COLUMN_LEVEL],
-                side=row[_COLUMN_SIDE],
+                level=CelesteLevel(row[_COLUMN_LEVEL]),
+                side=CelesteSide(row[_COLUMN_SIDE]),
                 offset=row[_COLUMN_OFFSET],
             )
             cls._item_lookup[uuid] = row
