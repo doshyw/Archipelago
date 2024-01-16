@@ -59,12 +59,25 @@ class VictoryCondition(Choice):
     default = VictoryConditionEnum.CHAPTER_7_SUMMIT.value
 
 
+class ProgressionSystemEnum(Enum):
+    DEFAULT_PROGRESSION = 0
+
+
+class ProgressionSystem(Choice):
+    """Selects the Progression System for the World."""
+
+    display_name = "Progression System"
+    option_defult_progression = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
+    default = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
+
+
 celeste_options: Dict[str, type] = {
     "berries_required": BerriesRequired,
     "cassettes_required": CassettesRequired,
     "hearts_required": HeartsRequired,
     "levels_required": LevelsRequired,
     "victory_condition": VictoryCondition,
+    "progression_system": ProgressionSystem,
 }
 
 
