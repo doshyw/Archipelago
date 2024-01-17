@@ -214,7 +214,7 @@ class DefaultProgression(BaseProgression):
                 if strawberry_count >= required_strawberries:
                     classification = ItemClassification.useful
                 strawberry_count += 1
-            if level == self._goal_level() and side == self._goal_side() and item_type != CelesteItemType.COMPLETION:
+            elif level == self._goal_level() and side == self._goal_side() and item_type != CelesteItemType.COMPLETION:
                 classification = ItemClassification.useful
 
             item = CelesteItem(
