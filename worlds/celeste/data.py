@@ -121,18 +121,6 @@ class BaseData:
         return cls._region_lookup[cls._region_hash(level, side)][_COLUMN_REGION_NAME]
 
     @classmethod
-    def item_name_to_id(cls) -> Dict[str, int]:
-        if not cls._generated:
-            cls._generate_lookups()
-        return cls._item_name_to_id
-
-    @classmethod
-    def location_name_to_id(cls) -> Dict[str, int]:
-        if not cls._generated:
-            cls._generate_lookups()
-        return cls._location_name_to_id
-
-    @classmethod
     def items(
         cls,
         before_level: CelesteLevel = CelesteLevel.FAREWELL,
