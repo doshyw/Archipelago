@@ -58,9 +58,6 @@ class CelesteItemType(Enum):
     STRAWBERRY = 4
 
 
-STRAWBERRY_UUID = _OFFSET_BASE + _OFFSET_TYPE * CelesteItemType.STRAWBERRY.value
-
-
 class BaseData:
     _generated = False
 

@@ -4,7 +4,6 @@ from typing import Callable, Dict, List, Optional
 
 from BaseClasses import CollectionState, ItemClassification, MultiWorld, Region
 from worlds.celeste.data import (
-    STRAWBERRY_UUID,
     BaseData,
     CelesteItem,
     CelesteItemType,
@@ -204,7 +203,6 @@ class DefaultProgression(BaseProgression):
         for item_type, level, side, name, uuid in BaseData.items(self._goal_level(), self._goal_side()):
             classification = ItemClassification.progression
             if item_type == CelesteItemType.STRAWBERRY:
-                uuid = STRAWBERRY_UUID
                 if strawberry_count >= required_strawberries:
                     classification = ItemClassification.filler
                 strawberry_count += 1
@@ -246,10 +244,7 @@ class DefaultProgression(BaseProgression):
             raise RuntimeError("[Celeste] Items have not yet been initialised for this system.")
 
         for uuid, item in self._items.items():
-            if item.item_type != CelesteItemType.STRAWBERRY:
-                self._item_name_to_id[item.name] = uuid
-
-        self._item_name_to_id["Strawberry"] = STRAWBERRY_UUID
+            self._item_name_to_id[item.name] = uuid
 
         return self._item_name_to_id
 
