@@ -18,21 +18,17 @@ class BaseProgression(ABC):
     _options: Dict[str, int | bool]
 
     _regions: List[Region]
-    _items: Dict[int, CelesteItem]
+    _items: List[CelesteItem]
+    _items_dict: Dict[int, CelesteItem]
     _locations: Dict[int, CelesteLocation]
-
-    _item_name_to_id: Dict[str, int]
-    _location_name_to_id: Dict[str, int]
 
     def __init__(self, options: Dict[str, int | bool]):
         self._options = options
 
         self._regions = None
         self._items = None
+        self._items_dict = None
         self._locations = None
-
-        self._item_name_to_id = None
-        self._location_name_to_id = None
 
     def _goal_level(self) -> CelesteLevel:
         victory_condition = self.get_option("victory_condition")
@@ -49,9 +45,6 @@ class BaseProgression(ABC):
     def get_option(self, name: str) -> int | bool:
         return self._options[name]
 
-    def item_name_to_id(self) -> Dict[str, int]:
-        return {}
-
     @abstractmethod
     def victory_item_name(self) -> str:
         return ""
@@ -61,21 +54,27 @@ class BaseProgression(ABC):
         return []
 
     @abstractmethod
-    def items(self, player: int, multiworld: MultiWorld) -> Dict[int, CelesteItem]:
+    def items(self, player: int, multiworld: MultiWorld) -> List[CelesteItem]:
         return []
 
     @abstractmethod
+    def items_dict(self, player: int, multiworld: MultiWorld) -> Dict[int, CelesteItem]:
+        return {}
+
+    @abstractmethod
     def locations(self, player: int, multiworld: MultiWorld) -> Dict[int, CelesteLocation]:
-        return []
+        return {}
 
 
 class DefaultProgression(BaseProgression):
-    @staticmethod
     def _region_access_rule(
-        player: int, level: CelesteLevel, side: CelesteSide
+        self, player: int, level: CelesteLevel, side: CelesteSide
     ) -> Optional[Callable[[CollectionState], bool]]:
-        if side == 0:
-            if level == 1:
+        if BaseData.level_before((self._goal_level(), self._goal_side()), (level, side)):
+            return lambda state: False
+
+        if side == CelesteSide.A_SIDE:
+            if level == CelesteLevel.FORSAKEN_CITY:
                 return None
             return lambda state: state.has_any(
                 {
@@ -85,11 +84,11 @@ class DefaultProgression(BaseProgression):
                 },
                 player,
             )
-        elif side == 1:
+        elif side == CelesteSide.B_SIDE:
             return lambda state: state.has(
                 BaseData.item_name(CelesteItemType.CASSETTE, level, CelesteSide.A_SIDE), player
             )
-        elif side == 2:
+        elif side == CelesteSide.C_SIDE:
             return lambda state: state.has_all(
                 {
                     BaseData.item_name(CelesteItemType.COMPLETION, level, CelesteSide.A_SIDE),
@@ -103,26 +102,23 @@ class DefaultProgression(BaseProgression):
     def _location_access_rule(
         self, player: int, level: CelesteLevel, side: CelesteSide
     ) -> Optional[Callable[[CollectionState], bool]]:
-        access_rule = lambda state: True
-
         if level == CelesteLevel.CORE:
             if side == CelesteSide.A_SIDE:
-                access_rule = lambda state: access_rule(state) and state.has_group("gemhearts", player, 4)
+                return lambda state: state.has_group("hearts", player, 4)
             elif side == CelesteSide.B_SIDE:
-                access_rule = lambda state: access_rule(state) and state.has_group("gemhearts", player, 15)
+                return lambda state: state.has_group("hearts", player, 15)
             elif side == CelesteSide.C_SIDE:
-                access_rule = lambda state: access_rule(state) and state.has_group("gemhearts", player, 23)
+                return lambda state: state.has_group("hearts", player, 23)
 
         if level == self._goal_level() and side == self._goal_side():
-            access_rule = lambda state: (
-                access_rule
-                and state.has_group(
+            return lambda state: (
+                state.has_group(
                     "hearts",
                     player,
                     self.get_option("hearts_required"),
                 )
-                and state.has_group(
-                    "berries",
+                and state.has(
+                    "Strawberry",
                     player,
                     self.get_option("berries_required"),
                 )
@@ -138,7 +134,7 @@ class DefaultProgression(BaseProgression):
                 )
             )
 
-        return access_rule
+        return lambda state: True
 
     def victory_item_name(self) -> str:
         return BaseData.item_name(CelesteItemType.COMPLETION, self._goal_level(), self._goal_side())
@@ -160,9 +156,7 @@ class DefaultProgression(BaseProgression):
         for level, side, name in BaseData.regions(self._goal_level(), self._goal_side()):
             level_region = Region(name, player, multiworld)
             self._regions.append(level_region)
-            map_region.connect(
-                level_region, f"Load {name}", DefaultProgression._region_access_rule(player, level, side)
-            )
+            map_region.connect(level_region, f"Load {name}", self._region_access_rule(player, level, side))
             native_locations = [
                 location for location in self._locations.values() if location.level == level and location.side == side
             ]
@@ -172,10 +166,24 @@ class DefaultProgression(BaseProgression):
 
         return self._regions
 
-    def items(self, player: int, multiworld: MultiWorld) -> Dict[int, CelesteItem]:
+    def items_dict(self, player: int, multiworld: MultiWorld) -> List[CelesteItem]:
+        if self._items_dict is not None:
+            return self._items_dict
+        self._items_dict = {}
+
+        if self._items is None:
+            self.items(player, multiworld)
+
+        for item in self._items:
+            if item.code not in self._items_dict:
+                self._items_dict[item.code] = item
+
+        return self._items_dict
+
+    def items(self, player: int, multiworld: MultiWorld) -> List[CelesteItem]:
         if self._items is not None:
             return self._items
-        self._items = {}
+        self._items = []
 
         item_count = {
             CelesteItemType.CASSETTE: 0,
@@ -204,8 +212,10 @@ class DefaultProgression(BaseProgression):
             classification = ItemClassification.progression
             if item_type == CelesteItemType.STRAWBERRY:
                 if strawberry_count >= required_strawberries:
-                    classification = ItemClassification.filler
+                    classification = ItemClassification.useful
                 strawberry_count += 1
+            if level == self._goal_level() and side == self._goal_side() and item_type != CelesteItemType.COMPLETION:
+                classification = ItemClassification.useful
 
             item = CelesteItem(
                 name=name,
@@ -216,7 +226,7 @@ class DefaultProgression(BaseProgression):
                 level=level,
                 side=side,
             )
-            self._items[uuid] = item
+            self._items.append(item)
 
         return self._items
 
@@ -234,29 +244,3 @@ class DefaultProgression(BaseProgression):
             self._locations[uuid] = location
 
         return self._locations
-
-    def item_name_to_id(self) -> Dict[str, int]:
-        if self._item_name_to_id is not None:
-            return self._item_name_to_id
-        self._item_name_to_id = {}
-
-        if self._items is None:
-            raise RuntimeError("[Celeste] Items have not yet been initialised for this system.")
-
-        for uuid, item in self._items.items():
-            self._item_name_to_id[item.name] = uuid
-
-        return self._item_name_to_id
-
-    def location_name_to_id(self) -> Dict[str, int]:
-        if self._location_name_to_id is not None:
-            return self._location_name_to_id
-        self._location_name_to_id = {}
-
-        if self._locations is None:
-            raise RuntimeError("[Celeste] Locations have not yet been initialised for this system.")
-
-        for uuid, location in self._locations.items():
-            self._location_name_to_id[location.name] = uuid
-
-        return self._location_name_to_id
