@@ -18,8 +18,22 @@ from worlds.celeste.options import VictoryConditionEnum
 class BaseProgression(ABC):
     _options: Dict[str, int | bool]
 
+    _regions: List[Region]
+    _items: Dict[int, CelesteItem]
+    _locations: Dict[int, CelesteLocation]
+
+    _item_name_to_id: Dict[str, int]
+    _location_name_to_id: Dict[str, int]
+
     def __init__(self, options: Dict[str, int | bool]):
         self._options = options
+
+        self._regions = None
+        self._items = None
+        self._locations = None
+
+        self._item_name_to_id = None
+        self._location_name_to_id = None
 
     def _goal_level(self) -> CelesteLevel:
         victory_condition = self.get_option("victory_condition")
@@ -35,6 +49,9 @@ class BaseProgression(ABC):
 
     def get_option(self, name: str) -> int | bool:
         return self._options[name]
+
+    def item_name_to_id(self) -> Dict[str, int]:
+        return {}
 
     @abstractmethod
     def victory_item_name(self) -> str:
@@ -54,10 +71,6 @@ class BaseProgression(ABC):
 
 
 class DefaultProgression(BaseProgression):
-    _regions: List[Region]
-    _items: Dict[int, CelesteItem]
-    _locations: Dict[int, CelesteLocation]
-
     @staticmethod
     def _region_access_rule(
         player: int, level: CelesteLevel, side: CelesteSide
@@ -152,7 +165,7 @@ class DefaultProgression(BaseProgression):
                 level_region, f"Load {name}", DefaultProgression._region_access_rule(player, level, side)
             )
             native_locations = [
-                location for location in self._locations if location.level == level and location.side == side
+                location for location in self._locations.values() if location.level == level and location.side == side
             ]
             for location in native_locations:
                 level_region.locations.append(location)
@@ -172,7 +185,7 @@ class DefaultProgression(BaseProgression):
             CelesteItemType.STRAWBERRY: 0,
         }
 
-        for (item_type,) in BaseData.items(self._goal_level(), self._goal_side(), False):
+        for item_type in [elem[0] for elem in BaseData.items(self._goal_level(), self._goal_side(), False)]:
             item_count[item_type] += 1
 
         self._options["berries_required"] = min(
@@ -223,3 +236,32 @@ class DefaultProgression(BaseProgression):
             self._locations[uuid] = location
 
         return self._locations
+
+    def item_name_to_id(self) -> Dict[str, int]:
+        if self._item_name_to_id is not None:
+            return self._item_name_to_id
+        self._item_name_to_id = {}
+
+        if self._items is None:
+            raise RuntimeError("[Celeste] Items have not yet been initialised for this system.")
+
+        for uuid, item in self._items.items():
+            if item.item_type != CelesteItemType.STRAWBERRY:
+                self._item_name_to_id[item.name] = uuid
+
+        self._item_name_to_id["Strawberry"] = STRAWBERRY_UUID
+
+        return self._item_name_to_id
+
+    def location_name_to_id(self) -> Dict[str, int]:
+        if self._location_name_to_id is not None:
+            return self._location_name_to_id
+        self._location_name_to_id = {}
+
+        if self._locations is None:
+            raise RuntimeError("[Celeste] Locations have not yet been initialised for this system.")
+
+        for uuid, location in self._locations.items():
+            self._location_name_to_id[location.name] = uuid
+
+        return self._location_name_to_id

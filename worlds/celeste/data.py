@@ -69,9 +69,6 @@ class BaseData:
     _item_lookup: Dict[int, Dict[str, Any]] = {}
     _region_lookup: Dict[int, Dict[str, Any]] = {}
 
-    _item_name_to_id: Dict[str, int] = {}
-    _location_name_to_id: Dict[str, int] = {}
-
     @classmethod
     def _generate_lookups(cls):
         for row in cls._item_data:
@@ -82,10 +79,6 @@ class BaseData:
                 offset=row[_COLUMN_OFFSET],
             )
             cls._item_lookup[uuid] = row
-            cls._location_name_to_id[row[_COLUMN_LOCATION_NAME]] = uuid
-            if CelesteItemType[row[_COLUMN_ITEM_TYPE].upper()] != CelesteItemType.STRAWBERRY:
-                cls._item_name_to_id[row[_COLUMN_ITEM_NAME]] = uuid
-            cls._item_name_to_id["Strawberry"] = STRAWBERRY_UUID
 
         for row in cls._region_data:
             uuid = cls._region_hash(CelesteLevel(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE]))
@@ -151,10 +144,22 @@ class BaseData:
 
         max_region_uuid = cls._region_hash(before_level, before_side)
         return [
-            (v[_COLUMN_ITEM_TYPE], v[_COLUMN_LEVEL], v[_COLUMN_SIDE], v[_COLUMN_ITEM_NAME], uuid)
+            (
+                CelesteItemType[v[_COLUMN_ITEM_TYPE].upper()],
+                CelesteLevel(v[_COLUMN_LEVEL]),
+                CelesteSide(v[_COLUMN_SIDE]),
+                v[_COLUMN_ITEM_NAME],
+                uuid,
+            )
             for uuid, v in sorted(cls._item_lookup.items())
-            if (inclusive and cls._region_hash(v[_COLUMN_LEVEL], v[_COLUMN_SIDE]) <= max_region_uuid)
-            or (not inclusive and cls._region_hash(v[_COLUMN_LEVEL], v[_COLUMN_SIDE]) < max_region_uuid)
+            if (
+                inclusive
+                and cls._region_hash(CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE])) <= max_region_uuid
+            )
+            or (
+                not inclusive
+                and cls._region_hash(CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE])) < max_region_uuid
+            )
         ]
 
     @classmethod
@@ -169,10 +174,16 @@ class BaseData:
 
         max_region_uuid = cls._region_hash(before_level, before_side)
         return [
-            (v[_COLUMN_LEVEL], v[_COLUMN_SIDE], v[_COLUMN_LOCATION_NAME], uuid)
+            (CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE]), v[_COLUMN_LOCATION_NAME], uuid)
             for uuid, v in sorted(cls._item_lookup.items())
-            if (inclusive and cls._region_hash(v[_COLUMN_LEVEL], v[_COLUMN_SIDE]) <= max_region_uuid)
-            or (not inclusive and cls._region_hash(v[_COLUMN_LEVEL], v[_COLUMN_SIDE]) < max_region_uuid)
+            if (
+                inclusive
+                and cls._region_hash(CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE])) <= max_region_uuid
+            )
+            or (
+                not inclusive
+                and cls._region_hash(CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE])) < max_region_uuid
+            )
         ]
 
     @classmethod
@@ -187,7 +198,7 @@ class BaseData:
 
         max_uuid = cls._region_hash(before_level, before_side)
         return [
-            (v[_COLUMN_LEVEL], v[_COLUMN_SIDE], v[_COLUMN_REGION_NAME])
+            (CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE]), v[_COLUMN_REGION_NAME])
             for uuid, v in sorted(cls._region_lookup.items())
             if uuid <= max_uuid
             if (inclusive and uuid <= max_uuid) or (not inclusive and uuid < max_uuid)

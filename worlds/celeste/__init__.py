@@ -56,9 +56,6 @@ class CelesteWorld(World):
 
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
-        self.completion_level = 10
-
-    def generate_early(self) -> None:
         options = {x: get_option_value(self.multiworld, self.player, x) for x in celeste_options}
 
         if options["progression_system"] == ProgressionSystemEnum.DEFAULT_PROGRESSION.value:
