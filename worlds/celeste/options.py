@@ -67,7 +67,7 @@ class ProgressionSystem(Choice):
     """Selects the Progression System for the World."""
 
     display_name = "Progression System"
-    option_defult_progression = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
+    option_default_progression = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
     default = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
 
 
