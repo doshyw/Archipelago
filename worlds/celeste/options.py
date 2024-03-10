@@ -39,7 +39,7 @@ class LevelsRequired(Range):
 
     display_name = "Level Completion Requirement"
     range_start = 0
-    range_end = 24
+    range_end = 25
     default = 0
 
 
