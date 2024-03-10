@@ -23,8 +23,6 @@ class GameLogic:
     _location_generator: LocationGenerator
 
     def __init__(self, player: int, multiworld: MultiWorld, options: CelesteGameOptions):
-        if not isinstance(options, CelesteGameOptions):
-            options = CelesteGameOptions.upgrade(options)
         self._options = options
         self._location_accessor = LocationAccessorFactory.get_location_accessor(player, options)
         self._region_accessor = RegionAccessorFactory.get_region_accessor(player, options)

@@ -39,7 +39,7 @@ class CelesteWorld(World):
     """
 
     game = "Celeste"
-    option_dataclass = CelesteGameOptions
+    options_dataclass = CelesteGameOptions
     options: CelesteGameOptions
     topology_present = True
     web = CelesteWebWorld()
@@ -53,7 +53,6 @@ class CelesteWorld(World):
 
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
-        self.options: CelesteGameOptions
         self.game_logic = None
 
     def generate_early(self) -> None:
@@ -95,8 +94,12 @@ class CelesteWorld(World):
         )
 
     def fill_slot_data(self):
-        slot_data = {}
-        for option_name, value in self.options.as_dict(casing="pascal"):
-            slot_data[option_name] = value
-
-        return slot_data
+        return self.options.as_dict(
+            "berries_required",
+            "cassettes_required",
+            "hearts_required",
+            "levels_required",
+            "goal_level",
+            "progression_system",
+            "disable_heart_gates",
+        )

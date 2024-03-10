@@ -83,28 +83,6 @@ class CelesteGameOptions(PerGameCommonOptions):
     progression_system: ProgressionSystem
     disable_heart_gates: DisableHeartGates
 
-    @staticmethod
-    def upgrade(options: PerGameCommonOptions) -> "CelesteGameOptions":
-        return CelesteGameOptions(
-            options.progression_balancing,
-            options.accessibility,
-            options.local_items,
-            options.non_local_items,
-            options.start_inventory,
-            options.start_hints,
-            options.start_location_hints,
-            options.exclude_locations,
-            options.priority_locations,
-            options.item_links,
-            berries_required=BerriesRequired(BerriesRequired.default),
-            cassettes_required=CassettesRequired(CassettesRequired.default),
-            hearts_required=HeartsRequired(HeartsRequired.default),
-            levels_required=LevelsRequired(LevelsRequired.default),
-            goal_level=GoalLevel(GoalLevel.default),
-            progression_system=ProgressionSystem(ProgressionSystem.default),
-            disable_heart_gates=DisableHeartGates(DisableHeartGates.default),
-        )
-
     _goal_level_map = {
         GoalLevel.option_chapter_7_summit_a: CelesteLevel(CelesteChapter.THE_SUMMIT, CelesteSide.A_SIDE),
         GoalLevel.option_chapter_7_summit_b: CelesteLevel(CelesteChapter.THE_SUMMIT, CelesteSide.B_SIDE),
