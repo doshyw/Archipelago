@@ -52,7 +52,7 @@ class CelesteWorld(World):
 
     progression_system: BaseProgression
 
-    required_client_version = (0, 4, 3)
+    required_client_version = (0, 4, 4)
 
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
