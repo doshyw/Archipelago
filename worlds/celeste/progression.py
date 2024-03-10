@@ -95,8 +95,8 @@ class DefaultProgression(BaseProgression):
         elif side == CelesteSide.C_SIDE:
             return lambda state: state.has_all(
                 {
-                    BaseData.item_name(CelesteItemType.COMPLETION, level, CelesteSide.A_SIDE),
-                    BaseData.item_name(CelesteItemType.COMPLETION, level, CelesteSide.B_SIDE),
+                    BaseData.item_name(CelesteItemType.GEMHEART, level, CelesteSide.A_SIDE),
+                    BaseData.item_name(CelesteItemType.GEMHEART, level, CelesteSide.B_SIDE),
                 },
                 player,
             )
