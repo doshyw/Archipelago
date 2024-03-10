@@ -1,25 +1,21 @@
 # pylint: disable=missing-class-docstring, missing-module-docstring, fixme
 from copy import deepcopy
+from functools import partial
 from typing import List
 
 from BaseClasses import Item, ItemClassification, MultiWorld, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from worlds.celeste.data import (
     BaseData,
+    CelesteChapter,
     CelesteItem,
     CelesteItemType,
-    CelesteLevel,
     CelesteLocation,
     CelesteSide,
 )
-from worlds.celeste.progression import BaseProgression, DefaultProgression
+from worlds.celeste.progression import GameLogic
 
-from .options import (
-    ProgressionSystemEnum,
-    VictoryConditionEnum,
-    celeste_options,
-    get_option_value,
-)
+from .options import CelesteGameOptions
 
 
 class CelesteWebWorld(WebWorld):
@@ -43,49 +39,45 @@ class CelesteWorld(World):
     """
 
     game = "Celeste"
-    option_definitions = celeste_options
+    option_dataclass = CelesteGameOptions
+    options: CelesteGameOptions
     topology_present = True
     web = CelesteWebWorld()
 
     item_name_to_id = BaseData.item_name_to_id()
     location_name_to_id = BaseData.location_name_to_id()
 
-    progression_system: BaseProgression
+    game_logic: GameLogic
 
     required_client_version = (0, 4, 4)
 
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
-        self.progression_system = None
+        self.options: CelesteGameOptions
+        self.game_logic = None
 
     def generate_early(self) -> None:
-        options = {x: get_option_value(self.multiworld, self.player, x) for x in celeste_options}
-
-        if options["progression_system"] == ProgressionSystemEnum.DEFAULT_PROGRESSION.value:
-            self.progression_system = DefaultProgression(options)
+        self.game_logic = GameLogic(self.player, self.multiworld, self.options)
 
     def create_item(self, name: str) -> CelesteItem:
         uuid = self.item_name_to_id[name]
 
-        if self.progression_system is not None:
-            item_dict = self.progression_system.items_dict(self.player, self.multiworld)
-            if uuid in item_dict:
-                return item_dict[uuid].copy()
+        # If the World is properly initialised, get the item from the GameLogic object.
+        if self.game_logic is not None:
+            return self.game_logic.get_item(uuid)
 
-        raw_item = BaseData.get_item(uuid)
-        return CelesteItem(
-            raw_item[3], ItemClassification.filler, uuid, self.player, raw_item[0], raw_item[1], raw_item[2]
-        )
+        # Otherwise, create a raw Filler item based on the base data.
+        item_type, level, name, _ = BaseData.get_item(uuid)
+        return CelesteItem(name, ItemClassification.filler, uuid, self.player, item_type, level)
 
     def create_regions(self):
-        regions = self.progression_system.regions(self.player, self.multiworld)
-        self.multiworld.regions.extend(regions)
+        self.multiworld.regions.extend(self.game_logic.get_regions())
 
     def create_items(self):
-        item_table = self.progression_system.items(self.player, self.multiworld)
+        item_table = self.game_logic.get_items()
 
         for item in item_table:
-            if item.name != self.progression_system.victory_item_name():
+            if item.name != "Victory (Celeste)":
                 self.multiworld.itempool.append(item.copy())
 
         self.item_name_groups = {
@@ -95,23 +87,16 @@ class CelesteWorld(World):
         }
 
     def generate_basic(self) -> None:
-        victory_name = self.progression_system.victory_item_name()
-        self.multiworld.get_location(victory_name, self.player).place_locked_item(self.create_item(victory_name))
-        self.multiworld.completion_condition[self.player] = lambda state: state.has(
-            self.progression_system.victory_item_name(), self.player
+        self.multiworld.get_location(self.game_logic.get_victory_location().name, self.player).place_locked_item(
+            self.create_item("Victory (Celeste)")
+        )
+        self.multiworld.completion_condition[self.player] = partial(
+            lambda player, state: state.has("Victory (Celeste)", player), self.player
         )
 
     def fill_slot_data(self):
         slot_data = {}
-        for option_name in celeste_options:
-            current_option = self.progression_system.get_option(option_name)
-            initial_option = get_option_value(self.multiworld, self.player, option_name)
-            if current_option != initial_option:
-                print(
-                    f"[WARNING] [CELESTE] Invalid options value {option_name} = {initial_option}.",
-                    f"Overridden as {current_option}.",
-                )
-                getattr(self.options, option_name).value = current_option
-            slot_data[option_name] = current_option
+        for option_name, value in self.options.as_dict(casing="pascal"):
+            slot_data[option_name] = value
 
         return slot_data
