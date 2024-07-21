@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from BaseClasses import ItemClassification
-from worlds.celeste.data import VICTORY_UUID, BaseData, CelesteItem, CelesteItemType
-from worlds.celeste.options import CelesteGameOptions, ProgressionSystem
+
+from .data import VICTORY_UUID, BaseData, CelesteItem, CelesteItemType
+from .options import CelesteGameOptions, ProgressionSystem
 
 
 class ItemGeneratorFactory:

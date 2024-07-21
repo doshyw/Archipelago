@@ -3,7 +3,8 @@ from functools import partial
 from typing import Callable, Optional
 
 from BaseClasses import CollectionState
-from worlds.celeste.data import (
+
+from .data import (
     BaseData,
     CelesteChapter,
     CelesteItemType,
@@ -11,7 +12,6 @@ from worlds.celeste.data import (
     CelesteLocation,
     CelesteSide,
 )
-
 from .options import CelesteGameOptions, ProgressionSystem
 
 

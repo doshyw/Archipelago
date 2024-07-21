@@ -2,16 +2,17 @@
 from typing import List
 
 from BaseClasses import MultiWorld, Region
-from worlds.celeste.access_rules import (
+
+from .access_rules import (
     LocationAccessor,
     LocationAccessorFactory,
     RegionAccessor,
     RegionAccessorFactory,
 )
-from worlds.celeste.data import BaseData, CelesteItem, CelesteItemType, CelesteLocation
-from worlds.celeste.items import ItemGenerator, ItemGeneratorFactory
-from worlds.celeste.locations import LocationGenerator, LocationGeneratorFactory
-from worlds.celeste.options import CelesteGameOptions
+from .data import BaseData, CelesteItem, CelesteItemType, CelesteLocation
+from .items import ItemGenerator, ItemGeneratorFactory
+from .locations import LocationGenerator, LocationGeneratorFactory
+from .options import CelesteGameOptions
 
 
 class GameLogic:

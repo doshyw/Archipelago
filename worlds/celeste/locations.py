@@ -2,9 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from BaseClasses import MultiWorld, Region
-from worlds.celeste.access_rules import LocationAccessor, RegionAccessor
-from worlds.celeste.data import BaseData, CelesteLocation
-from worlds.celeste.options import CelesteGameOptions, ProgressionSystem
+
+from .access_rules import LocationAccessor, RegionAccessor
+from .data import BaseData, CelesteLocation
+from .options import CelesteGameOptions, ProgressionSystem
 
 
 class LocationGeneratorFactory:

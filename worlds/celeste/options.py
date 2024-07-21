@@ -6,7 +6,8 @@ from typing import Dict, Union
 
 from BaseClasses import MultiWorld
 from Options import Choice, DefaultOnToggle, PerGameCommonOptions, Range, Toggle
-from worlds.celeste.data import CelesteChapter, CelesteLevel, CelesteSide
+
+from .data import CelesteChapter, CelesteLevel, CelesteSide
 
 
 class BerriesRequired(Range):
