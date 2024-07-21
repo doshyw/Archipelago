@@ -109,14 +109,14 @@ class OriginalItemGenerator(ItemGenerator):
             # Initially assume items are progression.
             classification = ItemClassification.progression
 
-            # All strawberries above the required number are useful, rather than progression.
+            # All strawberries above the required number are filler, rather than progression.
             if item_type == CelesteItemType.STRAWBERRY:
                 if strawberry_count >= self._options.berries_required.value:
-                    classification = ItemClassification.useful
+                    classification = ItemClassification.filler
                 strawberry_count += 1
-            # All items normally found in the goal level are useful, rather than progression.
+            # All non-strawberry items normally found in the goal level are filler, rather than progression.
             elif level == goal_level and item_type != CelesteItemType.COMPLETION:
-                classification = ItemClassification.useful
+                classification = ItemClassification.filler
 
             # Adjust name for victory condition
             if level == goal_level and item_type == CelesteItemType.COMPLETION:
