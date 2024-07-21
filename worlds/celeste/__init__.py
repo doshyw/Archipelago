@@ -5,7 +5,8 @@ from typing import List
 
 from BaseClasses import Item, ItemClassification, MultiWorld, Tutorial
 from worlds.AutoWorld import WebWorld, World
-from worlds.celeste.data import (
+
+from .data import (
     BaseData,
     CelesteChapter,
     CelesteItem,
@@ -13,9 +14,8 @@ from worlds.celeste.data import (
     CelesteLocation,
     CelesteSide,
 )
-from worlds.celeste.progression import GameLogic
-
 from .options import CelesteGameOptions
+from .progression import GameLogic
 
 
 class CelesteWebWorld(WebWorld):
