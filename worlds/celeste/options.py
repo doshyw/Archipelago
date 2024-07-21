@@ -1,10 +1,13 @@
 # pylint: disable=missing-class-docstring, missing-module-docstring, fixme, unused-import
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Union
 
 from BaseClasses import MultiWorld
-from Options import Choice, DefaultOnToggle, Range, Toggle
+from Options import Choice, DefaultOnToggle, PerGameCommonOptions, Range, Toggle
+
+from .data import CelesteChapter, CelesteLevel, CelesteSide
 
 
 class BerriesRequired(Range):
@@ -39,58 +42,57 @@ class LevelsRequired(Range):
 
     display_name = "Level Completion Requirement"
     range_start = 0
-    range_end = 24
+    range_end = 25
     default = 0
 
 
-class VictoryConditionEnum(Enum):
-    CHAPTER_7_SUMMIT = 0
-    CHAPTER_8_CORE = 1
-    CHAPTER_9_FAREWELL = 2
-
-
-class VictoryCondition(Choice):
-    """Selects the Chapter whose Completion is the Victory Condition for the World."""
+class GoalLevel(Choice):
+    """Selects the Level whose Completion is the Victory Condition for the World."""
 
     display_name = "Victory Condition"
-    option_chapter_7_summit = VictoryConditionEnum.CHAPTER_7_SUMMIT.value
-    option_chapter_8_core = VictoryConditionEnum.CHAPTER_8_CORE.value
-    option_chapter_9_farewell = VictoryConditionEnum.CHAPTER_9_FAREWELL.value
-    default = VictoryConditionEnum.CHAPTER_7_SUMMIT.value
-
-
-class ProgressionSystemEnum(Enum):
-    DEFAULT_PROGRESSION = 0
+    option_chapter_7_summit_a = 0
+    option_chapter_8_core_a = 1
+    option_chapter_9_farewell_a = 2
+    option_chapter_7_summit_b = 3
+    option_chapter_8_core_b = 4
+    option_chapter_7_summit_c = 5
+    option_chapter_8_core_c = 6
+    default = 0
 
 
 class ProgressionSystem(Choice):
     """Selects the Progression System for the World."""
 
     display_name = "Progression System"
-    option_default_progression = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
-    default = ProgressionSystemEnum.DEFAULT_PROGRESSION.value
+    option_default_progression = 0
+    default = 0
 
 
-celeste_options: Dict[str, type] = {
-    "berries_required": BerriesRequired,
-    "cassettes_required": CassettesRequired,
-    "hearts_required": HeartsRequired,
-    "levels_required": LevelsRequired,
-    "victory_condition": VictoryCondition,
-    "progression_system": ProgressionSystem,
-}
+class DisableHeartGates(Toggle):
+    """Disables heart gates in Core and Farewell."""
+
+    display_name = "Disable Heart Gates"
 
 
-def is_option_enabled(world: MultiWorld, player: int, name: str) -> bool:
-    return get_option_value(world, player, name) > 0
+@dataclass
+class CelesteGameOptions(PerGameCommonOptions):
+    berries_required: BerriesRequired
+    cassettes_required: CassettesRequired
+    hearts_required: HeartsRequired
+    levels_required: LevelsRequired
+    goal_level: GoalLevel
+    progression_system: ProgressionSystem
+    disable_heart_gates: DisableHeartGates
 
+    _goal_level_map = {
+        GoalLevel.option_chapter_7_summit_a: CelesteLevel(CelesteChapter.THE_SUMMIT, CelesteSide.A_SIDE),
+        GoalLevel.option_chapter_7_summit_b: CelesteLevel(CelesteChapter.THE_SUMMIT, CelesteSide.B_SIDE),
+        GoalLevel.option_chapter_7_summit_c: CelesteLevel(CelesteChapter.THE_SUMMIT, CelesteSide.C_SIDE),
+        GoalLevel.option_chapter_8_core_a: CelesteLevel(CelesteChapter.CORE, CelesteSide.A_SIDE),
+        GoalLevel.option_chapter_8_core_b: CelesteLevel(CelesteChapter.CORE, CelesteSide.B_SIDE),
+        GoalLevel.option_chapter_8_core_c: CelesteLevel(CelesteChapter.CORE, CelesteSide.C_SIDE),
+        GoalLevel.option_chapter_9_farewell_a: CelesteLevel(CelesteChapter.FAREWELL, CelesteSide.A_SIDE),
+    }
 
-def get_option_value(world: MultiWorld, player: int, name: str) -> Union[bool, int]:
-    option = getattr(world, name, None)
-
-    if option is None:
-        return 0
-
-    if issubclass(celeste_options[name], Toggle) or issubclass(celeste_options[name], DefaultOnToggle):
-        return bool(option[player].value)
-    return option[player].value
+    def get_goal_level(self) -> CelesteLevel:
+        return CelesteGameOptions._goal_level_map[self.goal_level.value]

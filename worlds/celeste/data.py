@@ -1,6 +1,8 @@
 import json
 import pkgutil
+from dataclasses import dataclass
 from enum import Enum
+from functools import total_ordering
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -28,10 +30,21 @@ def _get_json_data(location: str) -> List[Dict[str, Any]]:
     return json.loads(byte_data)
 
 
-class CelesteLevel(Enum):
-    def previous(self) -> "CelesteLevel":
+@total_ordering
+class CelesteChapter(Enum):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CelesteChapter):
+            return False
+        return self.value == other.value
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, CelesteChapter):
+            return False
+        return self.value < other.value
+
+    def previous(self) -> "CelesteChapter":
         if self.value <= 10 and self.value > 0:
-            return CelesteLevel(self.value - 1)
+            return CelesteChapter(self.value - 1)
         else:
             return self
 
@@ -50,12 +63,47 @@ class CelesteLevel(Enum):
 
 
 class CelesteSide(Enum):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CelesteSide):
+            return False
+        return self.value == other.value
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, CelesteSide):
+            return False
+        return self.value < other.value
+
     A_SIDE = 0
     B_SIDE = 1
     C_SIDE = 2
 
 
+@dataclass
+@total_ordering
+class CelesteLevel:
+    """Class representing a playable level in Celeste.
+
+    Properties:
+        chapter (`CelesteChapter`): The chapter that the level is in.
+        side (`CelesteSide`): The side that the level is on.
+    """
+
+    chapter: CelesteChapter
+    side: CelesteSide
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CelesteLevel):
+            return False
+        return self.chapter == other.chapter and self.side == other.side
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, CelesteLevel):
+            return False
+        return self.chapter < other.chapter or (self.chapter == other.chapter and self.side < other.side)
+
+
 class CelesteItemType(Enum):
+    VICTORY = 0
     CASSETTE = 1
     COMPLETION = 2
     GEMHEART = 3
@@ -63,7 +111,14 @@ class CelesteItemType(Enum):
 
 
 STRAWBERRY_UUID = (
-    _OFFSET_BASE + _OFFSET_TYPE * CelesteItemType.STRAWBERRY.value + _OFFSET_LEVEL * CelesteLevel.NOT_APPLICABLE.value
+    _OFFSET_BASE + _OFFSET_TYPE * CelesteItemType.STRAWBERRY.value + _OFFSET_LEVEL * CelesteChapter.NOT_APPLICABLE.value
+)
+
+VICTORY_UUID = (
+    _OFFSET_BASE
+    + _OFFSET_TYPE * CelesteItemType.VICTORY.value
+    + _OFFSET_LEVEL * CelesteChapter.FAREWELL.value
+    + _OFFSET_SIDE * CelesteSide.B_SIDE.value
 )
 
 
@@ -71,7 +126,6 @@ class CelesteItem(Item):
     game: str = "Celeste"
     item_type: CelesteItemType
     level: CelesteLevel
-    side: CelesteSide
 
     def __init__(
         self,
@@ -81,37 +135,30 @@ class CelesteItem(Item):
         player: int,
         item_type: CelesteItemType,
         level: CelesteLevel,
-        side: CelesteSide,
     ):
         super().__init__(name, classification, code, player)
         self.item_type = item_type
         self.level = level
-        self.side = side
 
     def copy(self) -> "CelesteItem":
-        return CelesteItem(
-            self.name, self.classification, self.code, self.player, self.item_type, self.level, self.side
-        )
+        return CelesteItem(self.name, self.classification, self.code, self.player, self.item_type, self.level)
 
 
 class CelesteLocation(Location):
     game: str = "Celeste"
     level: CelesteLevel
-    side: CelesteSide
 
     # override constructor to automatically mark event locations as such
     def __init__(
         self,
         player: int,
         level: CelesteLevel,
-        side: CelesteSide,
         name: str = "",
         code: Optional[int] = None,
         parent: Optional[Region] = None,
     ):
         super().__init__(player, name, code, parent)
         self.level = level
-        self.side = side
         self.event = code is None
 
 
@@ -129,9 +176,9 @@ class BaseData:
     @classmethod
     def _generate_lookups(cls):
         for row in cls._item_data:
-            uuid = cls._item_hash(
+            uuid = cls.item_hash(
                 item_type=CelesteItemType[row[_COLUMN_ITEM_TYPE].upper()],
-                level=CelesteLevel(row[_COLUMN_LEVEL]),
+                level=CelesteChapter(row[_COLUMN_LEVEL]),
                 side=CelesteSide(row[_COLUMN_SIDE]),
                 offset=row[_COLUMN_OFFSET],
             )
@@ -143,13 +190,13 @@ class BaseData:
         cls._item_name_to_id["Strawberry"] = STRAWBERRY_UUID
 
         for row in cls._region_data:
-            uuid = cls._region_hash(CelesteLevel(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE]))
+            uuid = cls._region_hash(CelesteChapter(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE]))
             cls._region_lookup[uuid] = row
 
         cls._generated = True
 
     @classmethod
-    def _item_hash(cls, item_type: CelesteItemType, level: CelesteLevel, side: CelesteSide, offset: int) -> int:
+    def item_hash(cls, item_type: CelesteItemType, level: CelesteChapter, side: CelesteSide, offset: int) -> int:
         return (
             _OFFSET_BASE
             + _OFFSET_TYPE * item_type.value
@@ -159,7 +206,7 @@ class BaseData:
         )
 
     @classmethod
-    def _region_hash(cls, level: CelesteLevel, side: CelesteSide) -> int:
+    def _region_hash(cls, level: CelesteChapter, side: CelesteSide) -> int:
         return _OFFSET_LEVEL * level.value + _OFFSET_SIDE * side.value
 
     @classmethod
@@ -169,17 +216,23 @@ class BaseData:
         return cls._item_lookup[uuid][column]
 
     @classmethod
-    def item_name(cls, item_type: CelesteItemType, level: CelesteLevel, side: CelesteSide, offset: int = 0) -> str:
+    def item_name(cls, item_type: CelesteItemType, level: CelesteChapter, side: CelesteSide, offset: int = 0) -> str:
+        if not cls._generated:
+            cls._generate_lookups()
         if item_type == CelesteItemType.STRAWBERRY:
             return "Strawberry"
-        return cls._lookup_value(cls._item_hash(item_type, level, side, offset), _COLUMN_ITEM_NAME)
+        return cls._lookup_value(cls.item_hash(item_type, level, side, offset), _COLUMN_ITEM_NAME)
 
     @classmethod
-    def location_name(cls, item_type: CelesteItemType, level: CelesteLevel, side: CelesteSide, offset: int = 0) -> str:
-        return cls._lookup_value(cls._item_hash(item_type, level, side, offset), _COLUMN_LOCATION_NAME)
+    def location_name(
+        cls, item_type: CelesteItemType, level: CelesteChapter, side: CelesteSide, offset: int = 0
+    ) -> str:
+        if not cls._generated:
+            cls._generate_lookups()
+        return cls._lookup_value(cls.item_hash(item_type, level, side, offset), _COLUMN_LOCATION_NAME)
 
     @classmethod
-    def region_name(cls, level: CelesteLevel, side: CelesteSide) -> str:
+    def region_name(cls, level: CelesteChapter, side: CelesteSide) -> str:
         if not cls._generated:
             cls._generate_lookups()
         return cls._region_lookup[cls._region_hash(level, side)][_COLUMN_REGION_NAME]
@@ -197,15 +250,14 @@ class BaseData:
         return cls._location_name_to_id
 
     @classmethod
-    def get_item(cls, uuid: int) -> Tuple[CelesteItemType, CelesteLevel, CelesteSide, str, int]:
+    def get_item(cls, uuid: int) -> Tuple[CelesteItemType, CelesteLevel, str, int]:
         if not cls._generated:
             cls._generate_lookups()
 
         if uuid == STRAWBERRY_UUID:
             return (
                 CelesteItemType.STRAWBERRY,
-                CelesteLevel.NOT_APPLICABLE,
-                CelesteSide.A_SIDE,
+                CelesteLevel(CelesteChapter.NOT_APPLICABLE, CelesteSide.A_SIDE),
                 "Strawberry",
                 STRAWBERRY_UUID,
             )
@@ -214,85 +266,62 @@ class BaseData:
 
         return (
             CelesteItemType[item_dict[_COLUMN_ITEM_TYPE].upper()],
-            CelesteLevel(item_dict[_COLUMN_LEVEL]),
-            CelesteSide(item_dict[_COLUMN_SIDE]),
+            CelesteLevel(CelesteChapter(item_dict[_COLUMN_LEVEL]), CelesteSide(item_dict[_COLUMN_SIDE])),
             item_dict[_COLUMN_ITEM_NAME],
             uuid,
         )
 
     @classmethod
-    def level_before(cls, level_1: Tuple[CelesteLevel, CelesteSide], level_2: Tuple[CelesteLevel, CelesteSide]) -> bool:
-        return cls._region_hash(level_1[0], level_1[1]) < cls._region_hash(level_2[0], level_2[1])
-
-    @classmethod
     def items(
         cls,
-        before_level: CelesteLevel = CelesteLevel.FAREWELL,
-        before_side: CelesteSide = CelesteSide.C_SIDE,
-        inclusive: bool = True,
-    ) -> List[Tuple[CelesteItemType, CelesteLevel, CelesteSide, str, int]]:
+    ) -> List[Tuple[CelesteItemType, CelesteLevel, str, int]]:
         if not cls._generated:
             cls._generate_lookups()
-
-        max_region_uuid = cls._region_hash(before_level, before_side)
 
         item_list = []
         for uuid, row in sorted(cls._item_lookup.items()):
             if row[_COLUMN_ITEM_TYPE] == "strawberry":
                 continue
-
-            region_hash = cls._region_hash(CelesteLevel(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE]))
-            if (inclusive and region_hash <= max_region_uuid) or (not inclusive and region_hash < max_region_uuid):
-                item_list.append(cls.get_item(uuid))
+            item_list.append(cls.get_item(uuid))
 
         for row in cls._item_data:
             if row[_COLUMN_ITEM_TYPE] != "strawberry":
                 continue
-
-            region_hash = cls._region_hash(CelesteLevel(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE]))
-            if (inclusive and region_hash <= max_region_uuid) or (not inclusive and region_hash < max_region_uuid):
-                item_list.append(cls.get_item(STRAWBERRY_UUID))
+            item_list.append(
+                (
+                    CelesteItemType.STRAWBERRY,
+                    CelesteLevel(CelesteChapter(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE])),
+                    "Strawberry",
+                    STRAWBERRY_UUID,
+                )
+            )
 
         return item_list
 
     @classmethod
     def locations(
         cls,
-        before_level: CelesteLevel = CelesteLevel.FAREWELL,
-        before_side: CelesteSide = CelesteSide.C_SIDE,
-        inclusive: bool = True,
-    ) -> List[Tuple[CelesteLevel, CelesteSide, str, int]]:
+    ) -> List[Tuple[CelesteLevel, str, int]]:
         if not cls._generated:
             cls._generate_lookups()
 
-        max_region_uuid = cls._region_hash(before_level, before_side)
         return [
-            (CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE]), v[_COLUMN_LOCATION_NAME], uuid)
-            for uuid, v in sorted(cls._item_lookup.items())
-            if (
-                inclusive
-                and cls._region_hash(CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE])) <= max_region_uuid
+            (
+                CelesteLevel(CelesteChapter(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE])),
+                row[_COLUMN_LOCATION_NAME],
+                uuid,
             )
-            or (
-                not inclusive
-                and cls._region_hash(CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE])) < max_region_uuid
-            )
+            for uuid, row in sorted(cls._item_lookup.items())
         ]
 
     @classmethod
     def regions(
         cls,
-        before_level: CelesteLevel = CelesteLevel.FAREWELL,
-        before_side: CelesteSide = CelesteSide.C_SIDE,
-        inclusive: bool = True,
-    ) -> List[Tuple[CelesteLevel, CelesteSide, str]]:
+    ) -> List[Tuple[CelesteLevel, str]]:
         if not cls._generated:
             cls._generate_lookups()
 
-        max_uuid = cls._region_hash(before_level, before_side)
         return [
-            (CelesteLevel(v[_COLUMN_LEVEL]), CelesteSide(v[_COLUMN_SIDE]), v[_COLUMN_REGION_NAME])
-            for uuid, v in sorted(cls._region_lookup.items())
-            if uuid <= max_uuid
-            if (inclusive and uuid <= max_uuid) or (not inclusive and uuid < max_uuid)
+            (CelesteLevel(CelesteChapter(row[_COLUMN_LEVEL]), CelesteSide(row[_COLUMN_SIDE])), row[_COLUMN_REGION_NAME])
+            for uuid, row in sorted(cls._region_lookup.items())
         ]

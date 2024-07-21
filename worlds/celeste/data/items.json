@@ -1,5 +1,13 @@
 [
     {
+        "type": "victory",
+        "level": 10,
+        "side": 1,
+        "offset": 0,
+        "location_name": "Victory (Celeste)",
+        "item_name": "Victory (Celeste)"
+    },
+    {
         "type": "cassette",
         "level": 1,
         "side": 0,
