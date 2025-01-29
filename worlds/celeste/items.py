@@ -6,6 +6,94 @@ from BaseClasses import ItemClassification
 from .data import VICTORY_UUID, BaseData, CelesteItem, CelesteItemType
 from .options import CelesteGameOptions, ProgressionSystem
 
+ITEM_GROUPS = {
+    "Heart": {
+        "Crystal Heart (Chapter 1: Forsaken City A-Side)",
+        "Crystal Heart (Chapter 2: Old Site A-Side)",
+        "Crystal Heart (Chapter 3: Celestial Resort A-Side)",
+        "Crystal Heart (Chapter 4: Golden Ridge A-Side)",
+        "Crystal Heart (Chapter 5: Mirror Temple A-Side)",
+        "Crystal Heart (Chapter 6: Reflection A-Side)",
+        "Crystal Heart (Chapter 7: The Summit A-Side)",
+        "Crystal Heart (Chapter 8: Core A-Side)",
+    },
+    "Cassette": {
+        "Cassette (Chapter 1: Forsaken City A-Side)",
+        "Cassette (Chapter 2: Old Site A-Side)",
+        "Cassette (Chapter 3: Celestial Resort A-Side)",
+        "Cassette (Chapter 4: Golden Ridge A-Side)",
+        "Cassette (Chapter 5: Mirror Temple A-Side)",
+        "Cassette (Chapter 6: Reflection A-Side)",
+        "Cassette (Chapter 7: The Summit A-Side)",
+        "Cassette (Chapter 8: Core A-Side)"
+    },
+    "Completion": {
+        "Completion (Chapter 1: Forsaken City A-Side)",
+        "Completion (Chapter 2: Old Site A-Side)",
+        "Completion (Chapter 3: Celestial Resort A-Side)",
+        "Completion (Chapter 4: Golden Ridge A-Side)",
+        "Completion (Chapter 5: Mirror Temple A-Side)",
+        "Completion (Chapter 6: Reflection A-Side)",
+        "Completion (Chapter 7: The Summit A-Side)",
+        "Completion (Chapter 8: Core A-Side)",
+        "Completion (Chapter 1: Forsaken City B-Side)",
+        "Completion (Chapter 2: Old Site B-Side)",
+        "Completion (Chapter 3: Celestial Resort B-Side)",
+        "Completion (Chapter 4: Golden Ridge B-Side)",
+        "Completion (Chapter 5: Mirror Temple B-Side)",
+        "Completion (Chapter 6: Reflection B-Side)",
+        "Completion (Chapter 7: The Summit B-Side)",
+        "Completion (Chapter 8: Core B-Side)",
+        "Completion (Chapter 1: Forsaken City C-Side)",
+        "Completion (Chapter 2: Old Site C-Side)",
+        "Completion (Chapter 3: Celestial Resort C-Side)",
+        "Completion (Chapter 4: Golden Ridge C-Side)",
+        "Completion (Chapter 5: Mirror Temple C-Side)",
+        "Completion (Chapter 6: Reflection C-Side)",
+        "Completion (Chapter 7: The Summit C-Side)",
+        "Completion (Chapter 8: Core C-Side)"
+    },
+    "Chapter 1 Completion":{
+        "Completion (Chapter 1: Forsaken City A-Side)",
+        "Completion (Chapter 1: Forsaken City B-Side)",
+        "Completion (Chapter 1: Forsaken City C-Side)"
+    },
+    "Chapter 2 Completion":{
+        "Completion (Chapter 2: Old Site A-Side)",
+        "Completion (Chapter 2: Old Site B-Side)",
+        "Completion (Chapter 2: Old Site C-Side)"
+    },
+    "Chapter 3 Completion":{
+        "Completion (Chapter 3: Celestial Resort A-Side)",
+        "Completion (Chapter 3: Celestial Resort B-Side)",
+        "Completion (Chapter 3: Celestial Resort C-Side)"
+    },
+    "Chapter 4 Completion":{
+        "Completion (Chapter 4: Golden Ridge A-Side)",
+        "Completion (Chapter 4: Golden Ridge B-Side)",
+        "Completion (Chapter 4: Golden Ridge C-Side)"
+    },
+    "Chapter 5 Completion":{
+        "Completion (Chapter 5: Mirror Temple A-Side)",
+        "Completion (Chapter 5: Mirror Temple B-Side)",
+        "Completion (Chapter 5: Mirror Temple C-Side)"
+    },
+    "Chapter 6 Completion":{
+        "Completion (Chapter 6: Reflection A-Side)",
+        "Completion (Chapter 6: Reflection B-Side)",
+        "Completion (Chapter 6: Reflection C-Side)"
+    },
+    "Chapter 7 Completion":{
+        "Completion (Chapter 7: The Summit A-Side)",
+        "Completion (Chapter 7: The Summit B-Side)",
+        "Completion (Chapter 7: The Summit C-Side)"
+    },
+    "Chapter 8 Completion":{
+        "Completion (Chapter 8: Core A-Side)",
+        "Completion (Chapter 8: Core B-Side)",
+        "Completion (Chapter 8: Core C-Side)"
+    }
+}
 
 class ItemGeneratorFactory:
     """Factory used for retrieving an `ItemGenerator` for dependency injection in building a `ProgressionSystem`."""

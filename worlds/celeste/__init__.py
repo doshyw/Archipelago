@@ -17,7 +17,7 @@ from .data import (
 )
 from .options import CelesteGameOptions
 from .progression import GameLogic
-
+from .items import ITEM_GROUPS
 
 class CelesteWebWorld(WebWorld):
     theme = "ice"
@@ -49,16 +49,43 @@ class CelesteWorld(World):
 
     item_name_to_id = BaseData.item_name_to_id()
     location_name_to_id = BaseData.location_name_to_id()
+    item_name_groups = ITEM_GROUPS
 
     game_logic: GameLogic
 
     required_client_version = (0, 4, 4)
+
+    # Move into progression later, was easier to test here
+    maxGoalReqs = [(123, 6, 18, 18), (170, 7, 21, 22), (175, 8, 24, 25), (170, 7, 19, 19), (175, 8, 22, 23), (170, 7, 20, 20), (175, 8, 23, 24)]
 
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
         self.game_logic = None
 
     def generate_early(self) -> None:
+
+        maxreqs = self.maxGoalReqs[self.options.goal_level]
+        if self.options.berries_required > maxreqs[0]:
+            raise OptionError(f"{self.player_name}: Required number of berries {self.options.berries_required} "
+                f"is too high for this victory condition. Please lower your berry count to {maxreqs[0]} or less, "
+                f"or increase your victory condition requirement."
+                )
+        if self.options.cassettes_required > maxreqs[1]:
+            raise OptionError(f"{self.player_name}: Required number of cassettes {self.options.cassettes_required} "
+                f"is too high for this victory condition. Please lower your cassette count to {maxreqs[1]} or less, "
+                f"or increase your victory condition requirement."
+                )
+        if self.options.hearts_required > maxreqs[2]:
+            raise OptionError(f"{self.player_name}: Required number of hearts {self.options.hearts_required} "
+                f"is too high for this victory condition. Please lower your heart count to {maxreqs[2]} or less, "
+                f"or increase your victory condition requirement."
+                )
+        if self.options.levels_required > maxreqs[3]:
+            raise OptionError(f"{self.player_name}: Required number of level completions {self.options.levels_required} "
+                f"is too high for this victory condition. Please lower your completion count to {maxreqs[3]} or less, "
+                f"or increase your victory condition requirement."
+                )
+        #move above part of function into a new function in progression later
         self.game_logic = GameLogic(self.player, self.multiworld, self.options)
 
     def create_item(self, name: str) -> CelesteItem:
