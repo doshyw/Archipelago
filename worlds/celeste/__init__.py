@@ -5,6 +5,7 @@ from typing import List
 
 from BaseClasses import Item, ItemClassification, MultiWorld, Tutorial
 from worlds.AutoWorld import WebWorld, World
+from .options import CelesteGameOptions, celeste_option_groups
 
 from .data import (
     BaseData,
@@ -30,6 +31,8 @@ class CelesteWebWorld(WebWorld):
             ["doshyw"],
         )
     ]
+
+    option_groups = celeste_option_groups
 
 
 class CelesteWorld(World):
@@ -102,4 +105,6 @@ class CelesteWorld(World):
             "goal_level",
             "progression_system",
             "disable_heart_gates",
+            "death_link",
+            "death_link_amnesty"
         )

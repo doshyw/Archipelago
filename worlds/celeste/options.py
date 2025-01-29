@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Dict, Union
 
 from BaseClasses import MultiWorld
-from Options import Choice, DefaultOnToggle, PerGameCommonOptions, Range, Toggle
+from Options import Choice, DeathLink, OptionGroup, PerGameCommonOptions, Range, Toggle
 
 from .data import CelesteChapter, CelesteLevel, CelesteSide
 
@@ -73,6 +73,30 @@ class DisableHeartGates(Toggle):
 
     display_name = "Disable Heart Gates"
 
+class DeathLinkAmnesty(Range):
+    """
+    How many deaths it takes to send a DeathLink
+    """
+    display_name = "Death Link Amnesty"
+    range_start = 1
+    range_end = 50
+    default = 20
+
+celeste_option_groups = [
+    OptionGroup("Goal Options", [
+        BerriesRequired,
+        CassettesRequired,
+        HeartsRequired,
+        LevelsRequired,
+        GoalLevel
+    ]),
+    OptionGroup("Game Options", [
+        ProgressionSystem,
+        DisableHeartGates,
+        DeathLink,
+        DeathLinkAmnesty,
+    ])
+]
 
 @dataclass
 class CelesteGameOptions(PerGameCommonOptions):
@@ -83,6 +107,8 @@ class CelesteGameOptions(PerGameCommonOptions):
     goal_level: GoalLevel
     progression_system: ProgressionSystem
     disable_heart_gates: DisableHeartGates
+    death_link: DeathLink
+    death_link_amnesty: DeathLinkAmnesty
 
     _goal_level_map = {
         GoalLevel.option_chapter_7_summit_a: CelesteLevel(CelesteChapter.THE_SUMMIT, CelesteSide.A_SIDE),
