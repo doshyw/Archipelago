@@ -15,7 +15,7 @@ from .data import (
     CelesteLocation,
     CelesteSide,
 )
-from .options import CelesteGameOptions
+from Options import OptionError
 from .progression import GameLogic
 from .items import ITEM_GROUPS
 
@@ -55,37 +55,40 @@ class CelesteWorld(World):
 
     required_client_version = (0, 4, 4)
 
-    # Move into progression later, was easier to test here
-    maxGoalReqs = [(123, 6, 18, 18), (170, 7, 21, 22), (175, 8, 24, 25), (170, 7, 19, 19), (175, 8, 22, 23), (170, 7, 20, 20), (175, 8, 23, 24)]
-
     def __init__(self, multiworld: MultiWorld, player: int):
         super().__init__(multiworld, player)
         self.game_logic = None
 
     def generate_early(self) -> None:
-
-        maxreqs = self.maxGoalReqs[self.options.goal_level]
-        if self.options.berries_required > maxreqs[0]:
+        maxGoalReqs = [
+        {"berries":123, "cassettes":6, "hearts":18, "levels":18}, 
+        {"berries":170, "cassettes":7, "hearts":21, "levels":22}, 
+        {"berries":175, "cassettes":8, "hearts":24, "levels":25}, 
+        {"berries":170, "cassettes":7, "hearts":19, "levels":19}, 
+        {"berries":170, "cassettes":8, "hearts":22, "levels":23}, 
+        {"berries":175, "cassettes":7, "hearts":20, "levels":20}, 
+        {"berries":175, "cassettes":8, "hearts":23, "levels":24}]
+        maxreqs = maxGoalReqs[self.options.goal_level]
+        if self.options.berries_required > maxreqs["berries"]:
             raise OptionError(f"{self.player_name}: Required number of berries {self.options.berries_required} "
-                f"is too high for this victory condition. Please lower your berry count to {maxreqs[0]} or less, "
-                f"or increase your victory condition requirement."
+                f"is too high for this victory condition. Please lower your berry count to {maxreqs["berries"]} or "
+                f"less, or increase your victory condition requirement."
                 )
-        if self.options.cassettes_required > maxreqs[1]:
+        if self.options.cassettes_required > maxreqs["cassettes"]:
             raise OptionError(f"{self.player_name}: Required number of cassettes {self.options.cassettes_required} "
-                f"is too high for this victory condition. Please lower your cassette count to {maxreqs[1]} or less, "
-                f"or increase your victory condition requirement."
+                f"is too high for this victory condition. Please lower your cassette count to {maxreqs["cassettes"]} "
+                f"or less, or increase your victory condition requirement."
                 )
-        if self.options.hearts_required > maxreqs[2]:
+        if self.options.hearts_required > maxreqs["hearts"]:
             raise OptionError(f"{self.player_name}: Required number of hearts {self.options.hearts_required} "
-                f"is too high for this victory condition. Please lower your heart count to {maxreqs[2]} or less, "
-                f"or increase your victory condition requirement."
+                f"is too high for this victory condition. Please lower your heart count to {maxreqs["hearts"]} or "
+                f"less, or increase your victory condition requirement."
                 )
-        if self.options.levels_required > maxreqs[3]:
-            raise OptionError(f"{self.player_name}: Required number of level completions {self.options.levels_required} "
-                f"is too high for this victory condition. Please lower your completion count to {maxreqs[3]} or less, "
-                f"or increase your victory condition requirement."
+        if self.options.levels_required > maxreqs["levels"]:
+            raise OptionError(f"{self.player_name}: Required number of level completions "
+                f"{self.options.levels_required} is too high for this victory condition. Please lower your "
+                f"completion count to {maxreqs["levels"]} or less, or increase your victory condition requirement."
                 )
-        #move above part of function into a new function in progression later
         self.game_logic = GameLogic(self.player, self.multiworld, self.options)
 
     def create_item(self, name: str) -> CelesteItem:
